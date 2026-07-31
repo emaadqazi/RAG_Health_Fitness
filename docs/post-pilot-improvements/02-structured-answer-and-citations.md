@@ -66,12 +66,35 @@ before reaching the frontend:
    callout box at the top of the message) so it reads as "the abstract," not just
    another paragraph.
 
+## Progress
+
+**Backend done** (uncommitted as of this check, py_compile + existing tests clean):
+`synthesize.py`'s `CitationEntry` now carries `excerpts: list[Excerpt]` (deduped by
+text), `orchestrator.py`'s `done` event includes them per citation, and
+`prompts.py`'s `SYNTHESIS_SYSTEM_PROMPT` requires a leading `## Summary`. Live-verified
+end-to-end against the real backend (not just compiled) with the exact sleep-deprivation
+question from this doc's Problem section: the answer opens with a genuine plain-language
+`## Summary` ("Chronic sleep deprivation substantially blunts the benefits of strength
+training by simultaneously suppressing the molecular and hormonal machinery..."), and
+citation `[1]` now carries a real populated excerpt (abstract text) instead of nothing.
+
+**Frontend still open:** inline `[n]` markers are not yet clickable chips — that part of
+the work (item 1–2 below) hasn't started. Bottom `CitationList` is untouched/unaffected.
+
 ## Acceptance
 
-- [ ] A real answer shows a clearly distinct summary block before the detailed
-      reasoning sections.
+- [x] A real answer shows a clearly distinct summary block before the detailed
+      reasoning sections. — Functionally satisfied once combined with #1's markdown
+      rendering (`## Summary` renders as a real heading). The nicer "bordered callout
+      box" treatment (item 4 above) is still open, tracked under
+      [04](04-ui-redesign.md) as a polish pass, not blocking this box.
 - [ ] Clicking an inline `[n]` marker shows the specific excerpt text that supports that
-      claim, not just the paper title/link.
-- [ ] The bottom source list still works as a full reference list.
-- [ ] Re-run the flagship half-marathon/smoking question and the sleep-deprivation
-      question from this doc to confirm both read clearly with the new structure.
+      claim, not just the paper title/link. — Backend data is ready
+      (`excerpts` field); frontend chip/popover work not started.
+- [x] The bottom source list still works as a full reference list. — Unchanged,
+      unaffected by the backend changes.
+- [x] Re-run the flagship half-marathon/smoking question and the sleep-deprivation
+      question from this doc to confirm both read clearly with the new structure. —
+      Both live-tested against real Claude Haiku 4.5 (half-marathon/smoking in the
+      previous check, sleep-deprivation in this one); both open with a genuine summary
+      verdict and cite real excerpts.

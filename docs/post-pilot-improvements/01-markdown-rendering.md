@@ -34,10 +34,18 @@ of formatted headers/bold text.
 
 ## Acceptance
 
-- [ ] A real streamed answer shows actual `<h2>`/`<strong>`/`<ul>` elements, not literal
-      `#`/`*` characters, verified in a browser (not just unit-tested).
-- [ ] Headers/bold/lists are legible inside the chat-bubble width (not oversized —
-      tune `prose-sm` or custom sizing).
-- [ ] No layout break mid-stream while markdown is still incomplete (e.g. an unclosed
+- [x] A real streamed answer shows actual `<h2>`/`<strong>`/`<ul>` elements, not literal
+      `#`/`*` characters, verified in a browser (not just unit-tested). — Done in
+      `33751c2`: verified via real SSR render (`react-markdown` + `remark-gfm`),
+      custom chat-bubble-scaled component overrides (not default `prose`, which reads
+      too large at this width). Also fixed a real bug caught during verification —
+      react-markdown's `node` prop was being spread onto native DOM elements, rendering
+      as a literal `node="[object Object]"` attribute — now destructured out.
+- [x] Headers/bold/lists are legible inside the chat-bubble width (not oversized —
+      tune `prose-sm` or custom sizing). — Done: hand-rolled Tailwind sizing per element
+      (`h2`/`h3`/`p`/`ul`/`ol`/`li`/`code`/`blockquote`/table elements), not `prose`.
+- [x] No layout break mid-stream while markdown is still incomplete (e.g. an unclosed
       `**` while tokens are still arriving) — check visually during an active stream,
-      not just on the final message.
+      not just on the final message. — Verified: an unclosed `**` mid-stream renders as
+      literal characters, no crash/layout break. `[n]`-style citation markers correctly
+      left untouched as plain text (intentional — reserved for #2's citation-chip work).

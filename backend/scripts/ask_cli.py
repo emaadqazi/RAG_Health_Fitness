@@ -28,7 +28,9 @@ async def run(question: str) -> None:
         elif event.type == "done":
             print("\n\n=== Citations ===")
             for c in event.data["citations"]:
-                print(f"[{c['key']}] {c['title']} ({c['year']}) {c['link']}")
+                print(f"[{c['key']}] {c['title']} ({c['year']}) {c['link']} -- {len(c['excerpts'])} excerpt(s)")
+                for e in c["excerpts"]:
+                    print(f"    ({e['section']}) {e['text'][:120]}...")
         elif event.type == "error":
             print(f"\n[ERROR] {event.data['message']}")
 

@@ -133,6 +133,7 @@ async def run_pipeline(llm: LLMProvider, question: str) -> AsyncIterator[Pipelin
                     "title": c.paper.title,
                     "year": c.paper.year,
                     "link": c.paper.link,
+                    "excerpts": [{"text": e.text, "section": e.section} for e in c.excerpts],
                 }
                 for c in citations
             ]

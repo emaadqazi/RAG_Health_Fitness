@@ -11,11 +11,17 @@ export type SourcePaper = {
   sources: string[];
 };
 
+export type Excerpt = {
+  text: string;
+  section: string;
+};
+
 export type Citation = {
   key: number;
   title: string;
   year: number | null;
   link: string;
+  excerpts: Excerpt[];
 };
 
 export type ChatEvent =

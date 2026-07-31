@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import AsyncIterator
 
 from app.llm.base import LLMProvider
@@ -10,9 +10,19 @@ from app.vectorstore.store import ChunkSearchResult
 
 
 @dataclass
+class Excerpt:
+    text: str
+    section: str
+
+
+@dataclass
 class CitationEntry:
     key: int
     paper: Paper
+    # A paper can be cited via more than one retrieved chunk (same sub-topic or
+    # across sub-topics) -- keep all of them so the frontend can show the specific
+    # passage that backs a given claim, not just the paper title/link.
+    excerpts: list[Excerpt] = field(default_factory=list)
 
 
 def assemble_context(
@@ -40,8 +50,10 @@ def assemble_context(
             if paper.canonical_id not in citation_by_paper:
                 citation_by_paper[paper.canonical_id] = CitationEntry(key=next_key, paper=paper)
                 next_key += 1
-            key = citation_by_paper[paper.canonical_id].key
-            lines.append(f"[{key}] {paper.title} ({paper.year or 'n.d.'}): {r.text}")
+            entry = citation_by_paper[paper.canonical_id]
+            if not any(e.text == r.text for e in entry.excerpts):
+                entry.excerpts.append(Excerpt(text=r.text, section=r.section))
+            lines.append(f"[{entry.key}] {paper.title} ({paper.year or 'n.d.'}): {r.text}")
         sections.append("\n".join(lines))
 
     user_content = "\n\n".join(sections)

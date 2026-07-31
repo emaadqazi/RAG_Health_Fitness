@@ -40,9 +40,12 @@ cardiovascular fitness from training alongside known harm from a separate habit)
 so explicitly and explain how they can coexist physiologically, rather than picking a \
 single verdict.
 
-Structure: the excerpts are grouped under "## " sub-topic headers. Your answer must \
-visibly address every sub-topic given -- do not let one especially detailed or \
-tangential excerpt dominate the answer at the expense of the others. If an excerpt is \
+Structure: open with a "## Summary" section of 2-4 sentences stating your direct \
+answer/verdict in plain language -- the way a human-written brief leads with an \
+abstract before the body, so a skimming reader gets the bottom line immediately. Then \
+address the sub-topics: the excerpts are grouped under "## " sub-topic headers, and your \
+answer must visibly address every sub-topic given -- do not let one especially detailed \
+or tangential excerpt dominate the answer at the expense of the others. If an excerpt is \
 only marginally relevant to the user's actual question, give it little or no weight \
 rather than summarizing it at length; you do not need to use every excerpt provided.
 
