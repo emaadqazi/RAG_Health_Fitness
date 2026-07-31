@@ -32,3 +32,20 @@ and transparency gaps in how the answer is presented — not pipeline/retrieval 
 Deploy (Phase 8) and general polish (Phase 9) from the original plan are unaffected by
 this list and can proceed independently — none of these four issues block a pilot
 deploy, they're about response quality/trust once real users are looking at it.
+
+## Dev-tooling gotcha (found and fixed during this Phase 10 pass)
+
+For a while during this work, the running-app verification kept intermittently failing
+in ways that looked like ordinary HMR flakiness from rapid concurrent edits (clicks not
+registering, streamed input not updating, dev server occasionally down). It was actually
+a real bug, just not in application code: **Turbopack's persistent dev cache (`.next/`)
+gets corrupted by rapidly creating and deleting the same route directory** (this repo's
+verification pattern used a throwaway `frontend/app/markdown-test/` route, created and
+removed several times across #1–#3's manual checks). Once corrupted, the dev server
+enters a fatal-panic-and-restart loop (`next.js` log: `Failed to write app endpoint
+/markdown-test/page ... no longer exists in task ... (no cell of this type exists)`),
+serving fast 200s on `/` the whole time — which is why it read as "flaky" rather than
+"broken." **Fix:** `rm -rf frontend/.next` and restart `next dev`. If a future scratch
+route is needed for manual verification, prefer a stable name that's created once and
+reused, or just delete `.next` after removing a throwaway route, rather than repeatedly
+creating/deleting different route paths across a long dev session.

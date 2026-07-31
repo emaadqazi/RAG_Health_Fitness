@@ -36,6 +36,13 @@ likely need redoing.
 
 ## Progress
 
+**Root cause found for the "can't get a clean live verification" problem** across this
+whole Phase 10 pass: not app instability, a corrupted Turbopack dev cache — see
+[../post-pilot-improvements/README.md](README.md#dev-tooling-gotcha-found-and-fixed-during-this-phase-10-pass).
+Fixed (`rm -rf frontend/.next` + restart); basic interactivity (typing, button
+enable/disable state) confirmed working again. Full answer+tab render screenshot still
+pending one more clean pass — see note at the bottom of Acceptance below.
+
 **In progress, most of it landed this cycle.** A real palette shift, not a token
 relabeling: `globals.css` background moved from pure `#ffffff`/`#0a0a0a` to a warm
 off-white `#faf9f7` / warm near-black `#16191a` (a chosen neutral with warmth, not a
