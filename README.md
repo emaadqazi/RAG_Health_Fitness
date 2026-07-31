@@ -22,17 +22,18 @@ Build phases:
 - [x] Phase 2 — Embeddings + Supabase cache — live-tested against local Postgres+pgvector:
       re-running `embed_cli.py` on the same query embedded 0 new chunks the second time
       (dedup-upsert cache contract holds) and similarity search returned on-topic chunks
-- [ ] Phase 3 — Synthesis + prompting — pipeline runs end-to-end against local Ollama/Qwen,
-      but the plan's own flagship verify case (half-marathon/smoking tradeoff question)
-      does **not** yet meet the bar: the live-tested answer drifted onto a generic
-      "arterial stiffness / vascular aging" tangent instead of directly weighing running
-      performance against smoking harm. This is the exact prompt-tuning risk flagged in
-      docs/ARCHITECTURE.md §10 ("needs a few iteration rounds... against edge-case
-      questions, not a one-shot prompt") — not yet done. A normal single-topic question
-      (creatine/recovery) synthesized fine, so this looks like a prompt issue on
-      multi-tradeoff questions specifically, not a broken pipeline. Also still pending:
-      quality validation against the production model (Claude Haiku 4.5, needs an
-      Anthropic API key — local testing so far used Ollama/Qwen3.5 as a stand-in).
+- [x] Phase 3 — Synthesis + prompting — live-tested against the **real production model**
+      (Claude Haiku 4.5, real `ANTHROPIC_API_KEY`) on the plan's flagship verify case
+      (half-marathon/smoking tradeoff): produced a coherent, well-cited answer that
+      directly engages the tradeoff (explains fitness and smoking harm as largely
+      independent pathways, cites 15 sources, single non-repeated disclaimer up front,
+      no over-hedging or refusal). This resolves the gap from the previous check —
+      earlier local-only Ollama/Qwen testing had drifted off-topic on this exact
+      question; switching to the real model plus the `MAX_SYNTHESIS_OUTPUT_TOKENS`
+      1800→2400 bump (the old cap was cutting Haiku off mid-sentence) fixed it. Only 1
+      of the plan's suggested 3–5 varied test questions has been run against the real
+      model so far (plus 1 against Ollama) — broader coverage is still worth doing before
+      calling prompt-tuning fully settled, but the hard case passes.
 - [x] Phase 4 — Backend API (SSE streaming) — live-tested: `curl -N` against a locally
       running server showed `decomposition` → `sources` → individually-arriving `token`
       events over several seconds, not one buffered response
@@ -51,17 +52,16 @@ Build phases:
 
 ## What's needed to deploy
 
-Phases 0, 1, 2, 4, 6, and 7 are code-complete and independently verified locally (see
-checklist above for exactly what was tested). Phase 3's synthesis quality on
-multi-tradeoff questions and Phase 5's live browser round-trip are still open — both are
-plain iteration work, not blocked on anything external. Separately, what's left requires
-accounts/credentials only you can create:
+Phases 0–4, 6, and 7 are code-complete and independently verified locally (see checklist
+above for exactly what was tested), including a real Claude Haiku 4.5 answer on the
+flagship question. Phase 5's live browser round-trip is the only fully open item, plus
+broader multi-question coverage on Phase 3 — both are plain iteration work, not blocked
+on anything external. Separately, what's left requires accounts/credentials only you can
+create:
 
-1. **Anthropic API key** (console.anthropic.com) — set `ANTHROPIC_API_KEY`, add a small
-   prepaid credit, and set a monthly spend cap/alert in the Console. This also unblocks
-   validating real answer quality on Claude Haiku 4.5 (local testing so far used a
-   local Ollama/Qwen3.5 model as a stand-in, per your request to experiment with it —
-   see docs/ARCHITECTURE.md §0/§10 for why that's not the same as production quality).
+1. **Anthropic API key** — already set locally and validated end-to-end against Claude
+   Haiku 4.5. Still needs to be set as a Render env var for the deployed backend, with a
+   monthly spend cap/alert in the Anthropic Console.
 2. **Supabase project** (supabase.com, free tier) — run `backend/app/vectorstore/schema.sql`
    against it, then use its Postgres connection string as `DATABASE_URL`.
 3. **Upstash Redis database** (upstash.com, free tier) — use its Redis connection
