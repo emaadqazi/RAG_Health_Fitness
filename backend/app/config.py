@@ -13,20 +13,22 @@ class Settings(BaseSettings):
     llm_provider: str = "anthropic"  # anthropic | ollama
     anthropic_model: str = "claude-haiku-4-5"
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "qwen2.5:9b"
+    ollama_model: str = "qwen3.5:9b"
 
     # Literature sources
     ncbi_email: str = ""
     ncbi_api_key: str = ""
     semantic_scholar_api_key: str = ""
 
-    # Vector store
-    supabase_url: str = ""
-    supabase_service_role_key: str = ""
+    # Vector store -- a direct Postgres connection string works against both a local
+    # Postgres+pgvector instance (dev) and Supabase's Postgres (prod, using the
+    # connection string from Project Settings -> Database, not the REST API).
+    database_url: str = "postgresql://localhost:5432/rag_health_fitness"
 
-    # Rate limiting
-    upstash_redis_rest_url: str = ""
-    upstash_redis_rest_token: str = ""
+    # Rate limiting -- standard Redis protocol works against both a local redis-server
+    # (dev) and Upstash's Redis (prod, Upstash supports the standard protocol over TLS
+    # via a rediss:// URL, not just its REST API).
+    redis_url: str = "redis://localhost:6379/0"
     rate_limit_per_ip_per_day: int = 20
     rate_limit_global_per_day: int = 300
 
