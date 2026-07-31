@@ -22,6 +22,24 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://api.semanticscholar.org/graph/v1"
 FIELDS = "title,abstract,year,externalIds,citationCount,authors"
 
+# Per Semantic Scholar's own docs, an individual API key is capped at 1 request/sec
+# across all endpoints. The orchestrator fires one search per sub-topic concurrently
+# (asyncio.gather), so without this throttle, 2+ sub-topics can still 429 each other
+# even with a key configured -- this serializes S2 calls process-wide to stay under it.
+_rate_lock = asyncio.Lock()
+_last_call_monotonic = 0.0
+_MIN_INTERVAL_SECONDS = 1.1
+
+
+async def _throttle() -> None:
+    global _last_call_monotonic
+    async with _rate_lock:
+        loop = asyncio.get_event_loop()
+        wait = _last_call_monotonic + _MIN_INTERVAL_SECONDS - loop.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _last_call_monotonic = loop.time()
+
 
 @retry(
     reraise=True,
@@ -34,6 +52,7 @@ async def _get(client: httpx.AsyncClient, params: dict) -> httpx.Response:
     headers = {}
     if settings.semantic_scholar_api_key:
         headers["x-api-key"] = settings.semantic_scholar_api_key
+    await _throttle()
     resp = await client.get(f"{BASE_URL}/paper/search", params=params, headers=headers, timeout=15)
     if resp.status_code == 429:
         raise httpx.HTTPStatusError("rate limited", request=resp.request, response=resp)

@@ -37,7 +37,7 @@ services:
       - key: MAX_CHUNKS_PER_SUBTOPIC
         value: "8"
       - key: MAX_SYNTHESIS_OUTPUT_TOKENS
-        value: "1800"
+        value: "2400"
       - key: MAX_QUESTION_LENGTH
         value: "500"
       - key: EMBEDDING_PROVIDER

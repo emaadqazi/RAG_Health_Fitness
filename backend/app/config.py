@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # Pipeline tuning
     max_subtopics: int = 4
     max_chunks_per_subtopic: int = 8
-    max_synthesis_output_tokens: int = 1800
+    max_synthesis_output_tokens: int = 2400
     max_question_length: int = 500
 
     # Embeddings
