@@ -24,11 +24,26 @@ export type Citation = {
   excerpts: Excerpt[];
 };
 
+export type SelectedChunk = {
+  title: string;
+  link: string;
+  distance: number;
+  section: string;
+  cited: boolean;
+};
+
+export type RetrievalDetail = {
+  label: string;
+  search_query: string;
+  candidates_by_source: Record<string, number>;
+  selected: SelectedChunk[];
+};
+
 export type ChatEvent =
   | { type: "decomposition"; data: { subtopics: SubTopic[] } }
   | { type: "sources"; data: { papers: SourcePaper[] } }
   | { type: "token"; data: { text: string } }
-  | { type: "done"; data: { citations: Citation[] } }
+  | { type: "done"; data: { citations: Citation[]; retrieval_detail: RetrievalDetail[] } }
   | { type: "error"; data: { message: string } };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";

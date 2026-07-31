@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { Citation } from "@/lib/api";
+import type { Citation, RetrievalDetail } from "@/lib/api";
 import { CitationChipRenderer, CitationsContext } from "./CitationChip";
 import { CitationList } from "./CitationList";
 import { ProgressStatus, type ProgressStage } from "./ProgressStatus";
+import { SourceTransparencyPanel } from "./SourceTransparencyPanel";
 import { remarkCitations } from "@/lib/remarkCitations";
 
 export type Message = {
   role: "user" | "assistant";
   text: string;
   citations?: Citation[];
+  retrievalDetail?: RetrievalDetail[];
   progressStage?: ProgressStage;
   error?: string;
 };
@@ -67,10 +69,18 @@ function splitSummarySection(text: string): { summary: string | null; rest: stri
   return { summary: summary || null, rest };
 }
 
+const TAB_BUTTON_BASE = "-mb-px border-b-2 px-2 pb-1.5 text-xs font-medium";
+const TAB_BUTTON_ACTIVE = "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100";
+const TAB_BUTTON_INACTIVE = "border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300";
+
 export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
+  const [activeTab, setActiveTab] = useState<"answer" | "sources">("answer");
   const citationsByKey = useMemo(() => new Map((message.citations ?? []).map((c) => [c.key, c])), [message.citations]);
   const { summary, rest } = message.role === "assistant" ? splitSummarySection(message.text) : { summary: null, rest: message.text };
+  // Retrieval detail (per-sub-topic candidate breakdown + relevance ranking) only
+  // arrives with the `done` event, once synthesis has finished and citations are known.
+  const hasSourceDetail = !isUser && (message.retrievalDetail?.length ?? 0) > 0;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -83,24 +93,47 @@ export function MessageBubble({ message }: { message: Message }) {
       >
         {message.progressStage && <ProgressStatus stage={message.progressStage} />}
         {message.error && <p className="text-sm text-red-600 dark:text-red-400">{message.error}</p>}
-        <CitationsContext.Provider value={citationsByKey}>
-          {summary && (
-            <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-900/40 dark:bg-sky-950/30">
-              <p className="mb-1 text-[11px] font-semibold tracking-wide text-sky-700 uppercase dark:text-sky-400">Summary</p>
-              {/* react-markdown re-parses on every render, which is fine at chat-turn
-                  scale (one message, a few KB). */}
-              <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
-                {summary}
-              </ReactMarkdown>
-            </div>
-          )}
-          {rest && (
-            <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
-              {rest}
-            </ReactMarkdown>
-          )}
-        </CitationsContext.Provider>
-        {message.citations && <CitationList citations={message.citations} />}
+        {hasSourceDetail && (
+          <div className="mb-2 flex gap-3 border-b border-zinc-200 dark:border-zinc-700">
+            <button
+              type="button"
+              onClick={() => setActiveTab("answer")}
+              className={`${TAB_BUTTON_BASE} ${activeTab === "answer" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
+            >
+              Answer
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("sources")}
+              className={`${TAB_BUTTON_BASE} ${activeTab === "sources" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
+            >
+              Sources
+            </button>
+          </div>
+        )}
+        {(!hasSourceDetail || activeTab === "answer") && (
+          <>
+            <CitationsContext.Provider value={citationsByKey}>
+              {summary && (
+                <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-900/40 dark:bg-sky-950/30">
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-sky-700 uppercase dark:text-sky-400">Summary</p>
+                  {/* react-markdown re-parses on every render, which is fine at chat-turn
+                      scale (one message, a few KB). */}
+                  <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+                    {summary}
+                  </ReactMarkdown>
+                </div>
+              )}
+              {rest && (
+                <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+                  {rest}
+                </ReactMarkdown>
+              )}
+            </CitationsContext.Provider>
+            {message.citations && <CitationList citations={message.citations} />}
+          </>
+        )}
+        {hasSourceDetail && activeTab === "sources" && <SourceTransparencyPanel detail={message.retrievalDetail!} />}
       </div>
     </div>
   );

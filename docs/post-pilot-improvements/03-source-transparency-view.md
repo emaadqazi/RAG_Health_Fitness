@@ -64,10 +64,47 @@ This is explicitly *not* meant to be a chart/diagram per the ask — a clean lis
 view grouped by sub-topic is enough; revisit as a visual only if a table ends up feeling
 insufficient once it's built.
 
+## Progress
+
+**Backend done and live-verified**, one deviation from the proposal above worth noting
+approvingly: instead of a separate/enriched `sources` event, the data landed as a new
+`retrieval_detail` field on the existing `done` event (alongside `citations`). That's a
+reasonable call, not a problem — this data is inherently about the *final* selection
+(which chunks made it in, which got cited), so it naturally belongs with the other
+end-of-stream data rather than needing a second synchronized event; `orchestrator.py`
+also captures raw per-source counts in `_search_all_sources()` *before* dedup collapses
+them, which is exactly right (dedup would otherwise hide, e.g., a paper both PubMed and
+Europe PMC returned).
+
+Live-tested with a real question ("does creatine supplementation improve cognitive
+function in sleep-deprived adults?"): got back real per-sub-topic
+`candidates_by_source` counts (e.g. `{"pubmed": 8, "semantic_scholar": 0,
+"europepmc": 8}` — the 0 is Semantic Scholar's known tight unauthenticated rate limit
+degrading gracefully, not a bug) and a real distance-sorted `selected` list per
+sub-topic with `cited` flags, confirming the ranking data is genuine and matches what
+actually got cited.
+
+**Frontend now done too.** `lib/api.ts` got the `RetrievalDetail`/`SelectedChunk` types
+and the `retrieval_detail` field on the `done` event. `components/SourceTransparencyPanel.tsx`
+renders per-sub-topic: the search query used, `candidates_by_source` counts (PubMed /
+Semantic Scholar / Europe PMC), and the `selected` chunks sorted by distance (lowest
+first) with cited entries visually distinguished (emerald background + "— cited in
+answer" label + a filled distance badge) vs. retrieved-but-unused ones (dimmed,
+`opacity-60`, neutral badge). `MessageBubble.tsx` exposes it as a real "Answer" /
+"Sources" tab pair on any assistant message that has retrieval detail (only appears
+once the `done` event lands, same timing as citations), not a separate page — matches
+the "keep it attached to the current answer" framing above. Verified via SSR render:
+real per-source counts, correct distance-sorted ordering, and the cited/uncited visual
+split all confirmed in rendered HTML output for both a cited and an uncited example.
+
 ## Acceptance
 
-- [ ] Tab shows real per-sub-topic candidate counts broken down by source API for an
-      actual question.
-- [ ] Tab shows the actual relevance ranking (distance) used to select the top-k chunks,
-      not just the final flat list.
-- [ ] Cited vs. retrieved-but-unused papers are visually distinguishable.
+- [x] Tab shows real per-sub-topic candidate counts broken down by source API for an
+      actual question. — Verified both via backend live-testing (Progress above) and a
+      frontend SSR render showing real PubMed/Semantic Scholar/Europe PMC counts.
+- [x] Tab shows the actual relevance ranking (distance) used to select the top-k chunks,
+      not just the final flat list. — `selected` is sorted by distance ascending before
+      being sent; panel renders the distance value per chunk.
+- [x] Cited vs. retrieved-but-unused papers are visually distinguishable. — Cited:
+      emerald background/badge + explicit label. Uncited: dimmed (`opacity-60`), neutral
+      badge. Both confirmed in rendered output.

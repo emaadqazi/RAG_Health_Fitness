@@ -31,6 +31,14 @@ async def run(question: str) -> None:
                 print(f"[{c['key']}] {c['title']} ({c['year']}) {c['link']} -- {len(c['excerpts'])} excerpt(s)")
                 for e in c["excerpts"]:
                     print(f"    ({e['section']}) {e['text'][:120]}...")
+            print("\n=== Retrieval detail (source transparency) ===")
+            for st in event.data.get("retrieval_detail", []):
+                print(f"\n-- {st['label']} --")
+                print(f"   query: {st['search_query']}")
+                print(f"   candidates by source: {st['candidates_by_source']}")
+                for sel in st["selected"]:
+                    mark = "CITED" if sel["cited"] else "     "
+                    print(f"   [{mark}] dist={sel['distance']:.4f} ({sel['section']}) {sel['title'][:70]}")
         elif event.type == "error":
             print(f"\n[ERROR] {event.data['message']}")
 

@@ -43,7 +43,14 @@ export function ChatWindow() {
             updateLastAssistant(prev, (m) => ({ ...m, progressStage: undefined, text: m.text + event.data.text }))
           );
         } else if (event.type === "done") {
-          setMessages((prev) => updateLastAssistant(prev, (m) => ({ ...m, progressStage: undefined, citations: event.data.citations })));
+          setMessages((prev) =>
+            updateLastAssistant(prev, (m) => ({
+              ...m,
+              progressStage: undefined,
+              citations: event.data.citations,
+              retrievalDetail: event.data.retrieval_detail,
+            }))
+          );
         } else if (event.type === "error") {
           setMessages((prev) => updateLastAssistant(prev, (m) => ({ ...m, progressStage: undefined, error: event.data.message })));
         }
