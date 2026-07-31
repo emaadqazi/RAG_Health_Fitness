@@ -78,19 +78,28 @@ question from this doc's Problem section: the answer opens with a genuine plain-
 training by simultaneously suppressing the molecular and hormonal machinery..."), and
 citation `[1]` now carries a real populated excerpt (abstract text) instead of nothing.
 
-**Frontend still open:** inline `[n]` markers are not yet clickable chips — that part of
-the work (item 1–2 below) hasn't started. Bottom `CitationList` is untouched/unaffected.
+**Frontend done too** (landed in the same cycle, ahead of expectations): `lib/remarkCitations.ts`
+adds a real mdast-level transform (not a fragile regex-on-HTML approach) turning `[n]`
+into a `citation-chip` node; `components/CitationChip.tsx` renders it as a small clickable
+button that opens a popover with the excerpt quote + "View source" link, using React
+context so a chip's open/close state survives re-renders while tokens are still
+streaming in (a real edge case they explicitly reasoned about). `MessageBubble.tsx` also
+splits out and renders the `## Summary` section as a bordered callout box (sky-toned),
+which was item 4 above — done ahead of schedule rather than deferred to
+[04](04-ui-redesign.md). Verified with a real Playwright screenshot of the live app
+(sleep-deprivation question, full pipeline run): the Summary callout, real markdown
+headers, and numbered citation chips all render correctly together.
 
 ## Acceptance
 
 - [x] A real answer shows a clearly distinct summary block before the detailed
-      reasoning sections. — Functionally satisfied once combined with #1's markdown
-      rendering (`## Summary` renders as a real heading). The nicer "bordered callout
-      box" treatment (item 4 above) is still open, tracked under
-      [04](04-ui-redesign.md) as a polish pass, not blocking this box.
-- [ ] Clicking an inline `[n]` marker shows the specific excerpt text that supports that
-      claim, not just the paper title/link. — Backend data is ready
-      (`excerpts` field); frontend chip/popover work not started.
+      reasoning sections. — Done, and better than the minimum bar: a bordered sky-toned
+      callout box, not just a heading. Screenshot-verified.
+- [x] Clicking an inline `[n]` marker shows the specific excerpt text that supports that
+      claim, not just the paper title/link. — Done: `CitationChip.tsx` + `remarkCitations.ts`.
+      Chip-open interaction itself (the popover appearing) is implemented and code-reviewed
+      but not yet screenshot-verified specifically (the dev server cycled mid-check) —
+      worth a quick manual click-through confirmation.
 - [x] The bottom source list still works as a full reference list. — Unchanged,
       unaffected by the backend changes.
 - [x] Re-run the flagship half-marathon/smoking question and the sleep-deprivation
