@@ -1,0 +1,52 @@
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    environment: str = "development"
+
+    # LLM
+    anthropic_api_key: str = ""
+    llm_provider: str = "anthropic"  # anthropic | ollama
+    anthropic_model: str = "claude-haiku-4-5"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:9b"
+
+    # Literature sources
+    ncbi_email: str = ""
+    ncbi_api_key: str = ""
+    semantic_scholar_api_key: str = ""
+
+    # Vector store
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+
+    # Rate limiting
+    upstash_redis_rest_url: str = ""
+    upstash_redis_rest_token: str = ""
+    rate_limit_per_ip_per_day: int = 20
+    rate_limit_global_per_day: int = 300
+
+    # Pipeline tuning
+    max_subtopics: int = 4
+    max_chunks_per_subtopic: int = 8
+    max_synthesis_output_tokens: int = 1800
+    max_question_length: int = 500
+
+    # Embeddings
+    embedding_provider: str = "fastembed"  # fastembed | voyage | openai
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+
+    cors_allowed_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

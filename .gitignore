@@ -1,0 +1,24 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env secrets
+.env
+.env.local
+!.env.example
+!.env.local.example
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
