@@ -60,6 +60,10 @@ usage-based free allowance). Accepted tradeoff: ~30–60s cold start after idle 
 Acts as a **growing cache**: once a paper is fetched and embedded, it's reused on future
 queries instead of re-fetched/re-embedded. Gotcha: Supabase free projects can auto-pause
 after ~1 week fully idle — may need a manual resume before a demo after a dormant period.
+*Implementation note:* accessed via a plain `DATABASE_URL` (asyncpg) rather than the
+`supabase-py` REST client — Supabase's Postgres connection string works identically to a
+local Postgres+pgvector instance, so this was chosen to make Phase 2 fully testable
+locally before a Supabase project exists. Same managed service, different client.
 
 **Embeddings:** local, in-process **`fastembed`** (ONNX runtime, not PyTorch) with
 **`BAAI/bge-small-en-v1.5`** (384-dim, ~130MB) — keeps the stack genuinely $0 and fits
@@ -70,7 +74,11 @@ pattern if RAM ever becomes a real problem.
 
 **Rate limiting:** Upstash Redis free tier, atomic `INCR`+`EXPIRE` daily counters —
 simpler/more correct than hand-rolled Postgres counters, and keeps abuse-protection
-separate from the paper cache.
+separate from the paper cache. *Implementation note:* accessed via a plain `REDIS_URL`
+(standard `redis-py`) rather than Upstash's REST SDK — Upstash also supports the
+standard Redis protocol over TLS (`rediss://`), so this was chosen for the same
+local-testability reason as the vector store above (works against local `redis-server`
+before an Upstash DB exists).
 
 **LLM provider abstraction:** `LLM_PROVIDER=anthropic` (prod, Haiku 4.5) or
 `LLM_PROVIDER=ollama` (local dev, Qwen2.5:9B via a plain `httpx` client) — orchestrator

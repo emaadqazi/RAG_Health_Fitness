@@ -1,0 +1,48 @@
+# Render Blueprint -- deploy via Render dashboard: New -> Blueprint -> select this repo.
+# Env vars marked sync: false must be set manually in the Render dashboard after the
+# first deploy (secrets should never live in this file / git).
+services:
+  - type: web
+    name: rag-health-fitness-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: NCBI_EMAIL
+        sync: false
+      - key: NCBI_API_KEY
+        sync: false
+      - key: SEMANTIC_SCHOLAR_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: RATE_LIMIT_PER_IP_PER_DAY
+        value: "20"
+      - key: RATE_LIMIT_GLOBAL_PER_DAY
+        value: "300"
+      - key: MAX_SUBTOPICS
+        value: "4"
+      - key: MAX_CHUNKS_PER_SUBTOPIC
+        value: "8"
+      - key: MAX_SYNTHESIS_OUTPUT_TOKENS
+        value: "1800"
+      - key: MAX_QUESTION_LENGTH
+        value: "500"
+      - key: EMBEDDING_PROVIDER
+        value: fastembed
+      - key: EMBEDDING_MODEL
+        value: BAAI/bge-small-en-v1.5
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # set to the deployed Vercel URL once known
