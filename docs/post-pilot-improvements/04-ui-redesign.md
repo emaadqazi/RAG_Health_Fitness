@@ -34,11 +34,46 @@ likely need redoing.
   component-level restyle of the existing five components plus `globals.css` theme
   tokens, not a from-scratch design system.
 
+## Progress
+
+**In progress, most of it landed this cycle.** A real palette shift, not a token
+relabeling: `globals.css` background moved from pure `#ffffff`/`#0a0a0a` to a warm
+off-white `#faf9f7` / warm near-black `#16191a` (a chosen neutral with warmth, not a
+generic default), neutrals across components moved from `zinc` to `stone` (pairs with
+the warm background), and a single **teal** accent now threads consistently through:
+the disclaimer banner (recolored from alarm-toned amber to teal, plus a small circular
+"i" info glyph — reads as informative rather than a warning, exactly the brief), the
+progress-status pulse dot, the example-question hover state, the chat input's
+focus ring, the submit button, markdown links/blockquotes, the Answer/Sources tab
+underline, the Summary callout (unified from its earlier one-off sky blue), citation
+chips + their excerpt popover, and the bottom citation list. `page.tsx` also now reads
+background/foreground from the CSS custom-property tokens instead of a hardcoded
+`bg-zinc-50 dark:bg-black` that had drifted out of sync with the token system — a real
+bug fix bundled into the redesign pass, not just styling. `tsc`/`eslint` clean throughout.
+
+**Update: `SourceTransparencyPanel.tsx` landed too**, closing the gap noted above —
+`zinc` → `stone`, links recolored to `teal`, and correctly *kept* `emerald` for the
+"cited in answer" semantic state rather than folding it into the teal accent (semantic
+color should stay distinct from the brand accent so it keeps meaning something — good
+instinct). Every component is now on one consistent palette.
+
+**Not yet done at all:** no mobile-viewport check, no fresh-eyes pass confirming the
+disclaimer/summary/chips/tab system reads as coherent together in a live browser (vs.
+my code-level review here), and error/rate-limit states haven't been re-checked under
+the new palette (error text is still plain `text-red-600` — that's correct per the
+brief's "reserve saturated red strictly for real error states," just unverified live).
+
 ## Acceptance
 
 - [ ] Fresh-eyes visual pass in a browser against both desktop and mobile viewport
-      widths.
+      widths. — Not done; only code-reviewed so far, and the dev server was too unstable
+      (cycling/down) to get a fresh screenshot this check.
 - [ ] Disclaimer banner, summary callout, citation chips, and source-transparency tab
-      (once #1–#3 land) read as one coherent visual system, not bolted-on pieces.
+      (once #1–#3 land) read as one coherent visual system, not bolted-on pieces. —
+      Everything but `SourceTransparencyPanel.tsx` is on the unified teal/stone system
+      now (code-level); that one file still needs the same pass, then a live check.
 - [ ] No regression to the progress states (`ProgressStatus.tsx`) or error/rate-limit
-      states — verify those still read clearly under the new palette.
+      states — verify those still read clearly under the new palette. — Not verified
+      live yet; `ProgressStatus.tsx`'s dot is now teal (intentional), error text
+      untouched (correct per the brief) — both need eyes-on confirmation, not just
+      code review.

@@ -9,8 +9,8 @@ const LABELS: Record<ProgressStage, string> = {
 
 export function ProgressStatus({ stage }: { stage: ProgressStage }) {
   return (
-    <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-zinc-400 dark:bg-zinc-500" />
+    <div className="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-teal-500 dark:bg-teal-400" />
       {LABELS[stage]}
     </div>
   );

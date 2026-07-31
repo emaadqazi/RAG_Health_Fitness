@@ -41,16 +41,16 @@ const markdownComponents: Components = {
   ol: ({ node: _node, ...props }) => <ol className="mb-2 ml-4 list-decimal space-y-0.5 text-sm last:mb-0" {...props} />,
   li: ({ node: _node, ...props }) => <li className="leading-relaxed" {...props} />,
   a: ({ node: _node, ...props }) => (
-    <a className="underline underline-offset-2 hover:no-underline" target="_blank" rel="noopener noreferrer" {...props} />
+    <a className="text-teal-700 underline underline-offset-2 hover:no-underline dark:text-teal-400" target="_blank" rel="noopener noreferrer" {...props} />
   ),
-  hr: () => <hr className="my-3 border-zinc-200 dark:border-zinc-800" />,
-  code: ({ node: _node, ...props }) => <code className="rounded bg-zinc-200/70 px-1 py-0.5 text-xs dark:bg-zinc-800" {...props} />,
+  hr: () => <hr className="my-3 border-stone-200 dark:border-stone-700" />,
+  code: ({ node: _node, ...props }) => <code className="rounded bg-stone-200/70 px-1 py-0.5 text-xs dark:bg-stone-700" {...props} />,
   blockquote: ({ node: _node, ...props }) => (
-    <blockquote className="mb-2 border-l-2 border-zinc-300 pl-3 text-sm italic text-zinc-600 dark:border-zinc-700 dark:text-zinc-400" {...props} />
+    <blockquote className="mb-2 border-l-2 border-teal-300 pl-3 text-sm text-stone-600 italic dark:border-teal-700 dark:text-stone-400" {...props} />
   ),
   table: ({ node: _node, ...props }) => <table className="mb-2 w-full border-collapse text-xs" {...props} />,
-  th: ({ node: _node, ...props }) => <th className="border-b border-zinc-300 px-2 py-1 text-left font-semibold dark:border-zinc-700" {...props} />,
-  td: ({ node: _node, ...props }) => <td className="border-b border-zinc-200 px-2 py-1 align-top dark:border-zinc-800" {...props} />,
+  th: ({ node: _node, ...props }) => <th className="border-b border-stone-300 px-2 py-1 text-left font-semibold dark:border-stone-600" {...props} />,
+  td: ({ node: _node, ...props }) => <td className="border-b border-stone-200 px-2 py-1 align-top dark:border-stone-700" {...props} />,
   // Custom node from lib/remarkCitations.ts -- not a standard HTML tag, so it's not
   // in react-markdown's Components type; the cast at the call site covers this one key.
   "citation-chip": ({ n }: { n: number }) => <CitationChipRenderer n={n} />,
@@ -70,8 +70,8 @@ function splitSummarySection(text: string): { summary: string | null; rest: stri
 }
 
 const TAB_BUTTON_BASE = "-mb-px border-b-2 px-2 pb-1.5 text-xs font-medium";
-const TAB_BUTTON_ACTIVE = "border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100";
-const TAB_BUTTON_INACTIVE = "border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300";
+const TAB_BUTTON_ACTIVE = "border-teal-600 text-teal-700 dark:border-teal-400 dark:text-teal-300";
+const TAB_BUTTON_INACTIVE = "border-transparent text-stone-400 hover:text-stone-600 dark:hover:text-stone-300";
 
 export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -87,14 +87,14 @@ export function MessageBubble({ message }: { message: Message }) {
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 sm:max-w-[70%] ${
           isUser
-            ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900"
-            : "bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
+            ? "bg-teal-600 text-white"
+            : "border border-stone-200 bg-white text-stone-900 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
         }`}
       >
         {message.progressStage && <ProgressStatus stage={message.progressStage} />}
         {message.error && <p className="text-sm text-red-600 dark:text-red-400">{message.error}</p>}
         {hasSourceDetail && (
-          <div className="mb-2 flex gap-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="mb-2 flex gap-3 border-b border-stone-200 dark:border-stone-700">
             <button
               type="button"
               onClick={() => setActiveTab("answer")}
@@ -115,8 +115,8 @@ export function MessageBubble({ message }: { message: Message }) {
           <>
             <CitationsContext.Provider value={citationsByKey}>
               {summary && (
-                <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-900/40 dark:bg-sky-950/30">
-                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-sky-700 uppercase dark:text-sky-400">Summary</p>
+                <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 dark:border-teal-900/40 dark:bg-teal-950/30">
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-400">Summary</p>
                   {/* react-markdown re-parses on every render, which is fine at chat-turn
                       scale (one message, a few KB). */}
                   <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>

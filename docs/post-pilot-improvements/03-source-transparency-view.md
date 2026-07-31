@@ -108,3 +108,15 @@ split all confirmed in rendered HTML output for both a cited and an uncited exam
 - [x] Cited vs. retrieved-but-unused papers are visually distinguishable. — Cited:
       emerald background/badge + explicit label. Uncited: dimmed (`opacity-60`), neutral
       badge. Both confirmed in rendered output.
+
+**Independent check (orchestrator):** code-reviewed `SourceTransparencyPanel.tsx`,
+`MessageBubble.tsx`'s tab wiring, and `lib/api.ts`'s types — all sound, `tsc`/`eslint`
+clean, follows the same context/conditional-render patterns already visually confirmed
+working in #2's citation chips. Independently re-verified the *backend* half live
+(`retrieval_detail` payload, real distance-sorted data, matches what's described here).
+Could not get my own screenshot of the tab itself this cycle — the frontend dev server
+was cycling (down for 30s+ mid-check, likely from concurrent edits) — so the three boxes
+above rest on strong code review + a working analogous pattern elsewhere, not a fresh
+independent screenshot. Flagging that distinction rather than re-asserting "verified" as
+if I'd seen it myself. Worth a quick visual confirmation next cycle once the dev server
+is stable.

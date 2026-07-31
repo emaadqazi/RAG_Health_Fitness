@@ -67,16 +67,16 @@ export function ChatWindow() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-6">
       {messages.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <p className="text-zinc-500 dark:text-zinc-400">Ask a health/fitness question grounded in published research.</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 text-center">
+          <p className="text-stone-500 dark:text-stone-400">Ask a health/fitness question grounded in published research.</p>
           <div className="flex flex-col gap-2">
             {EXAMPLE_QUESTIONS.map((q) => (
               <button
                 key={q}
                 onClick={() => ask(q)}
-                className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className="rounded-full border border-stone-300 px-4 py-2 text-sm text-stone-700 transition-colors hover:border-teal-300 hover:bg-teal-50 dark:border-stone-700 dark:text-stone-300 dark:hover:border-teal-800 dark:hover:bg-teal-950/30"
               >
                 {q}
               </button>
@@ -85,7 +85,7 @@ export function ChatWindow() {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-5 overflow-y-auto">
         {messages.map((m, i) => (
           <MessageBubble key={i} message={m} />
         ))}
@@ -96,7 +96,7 @@ export function ChatWindow() {
           e.preventDefault();
           ask(input);
         }}
-        className="mt-4 flex gap-2"
+        className="mt-5 flex gap-2"
       >
         <input
           value={input}
@@ -104,12 +104,12 @@ export function ChatWindow() {
           placeholder="Ask a question..."
           disabled={isStreaming}
           maxLength={500}
-          className="flex-1 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+          className="flex-1 rounded-full border border-stone-300 bg-white px-4 py-2.5 text-sm text-stone-900 outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:border-teal-400"
         />
         <button
           type="submit"
           disabled={isStreaming || !input.trim()}
-          className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-zinc-50 disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+          className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-teal-700 disabled:opacity-40 dark:bg-teal-600 dark:hover:bg-teal-500"
         >
           Ask
         </button>
