@@ -9,7 +9,9 @@ research to illustrate tradeoffs (e.g. "if I can run a half marathon in 1:30 but
 pack a day, what does that say about my health?") — take answers as a starting point for
 further reading, not a diagnosis or personal recommendation.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design and build plan.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design and build plan, and
+[docs/post-pilot-improvements/](docs/post-pilot-improvements/) for issues identified from
+actually using the app (markdown rendering, answer structure, source transparency, UI).
 
 ## Status
 
