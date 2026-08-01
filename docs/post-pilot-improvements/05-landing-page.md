@@ -41,13 +41,35 @@ wants kept (warm off-white/near-black background, teal accent, `stone` neutrals 
   example questions on the landing page itself; keep the landing page focused on the
   single CTA plus a short framing line (what the tool is, in one sentence).
 
+## Progress
+
+**Done.** `AppShell.tsx` (client-side state toggle, no new route) renders
+`LandingPage.tsx` first, handing off into the untouched `ChatWindow` empty state on
+"Let's begin". Kept the doc 04 palette exactly; identity comes from a slow ECG/pulse-
+line SVG drift + heartbeat icon, not new colors. "Cool 3D UI" is a CSS-only mouse-
+follow `rotateX/rotateY` tilt on the card (`perspective` + CSS custom properties) --
+no new dependency. Both motion effects respect `prefers-reduced-motion` two ways: the
+JS tilt listener is never attached when reduced motion is preferred (via
+`useSyncExternalStore`, after an eslint rule caught an initial `setState`-in-effect
+version), plus a CSS `@media (prefers-reduced-motion: reduce)` rule as a second line
+of defense on the SVG/icon animations.
+
+Live-verified with real Playwright screenshots (installed `playwright` + chromium
+myself this cycle to close the "I can't see a browser" gap) across desktop, mobile,
+and a reduced-motion-emulated run: "Let's begin" clickable within ~600ms every time
+(no meaningful delay), clean handoff into the chat empty state with no duplicated
+disclaimer/example questions, zero console/page errors.
+
 ## Acceptance
 
-- [ ] A real landing view appears before the chat, with a "Let's begin" (or equivalent)
-      action that transitions into the existing chat empty-state.
-- [ ] Visually reads as one identity with the rest of the app (same palette/type system
-      as doc 04), not a bolted-on separate design.
-- [ ] The 3D/motion element respects `prefers-reduced-motion` and doesn't meaningfully
+- [x] A real landing view appears before the chat, with a "Let's begin" (or equivalent)
+      action that transitions into the existing chat empty-state. — Screenshot-verified.
+- [x] Visually reads as one identity with the rest of the app (same palette/type system
+      as doc 04), not a bolted-on separate design. — Same teal/stone/warm-off-white
+      system, no new colors introduced.
+- [x] The 3D/motion element respects `prefers-reduced-motion` and doesn't meaningfully
       delay time-to-first-interaction for a user who just wants to start asking
-      questions.
-- [ ] Fresh-eyes check on both desktop and mobile viewport widths.
+      questions. — ~600ms to interactive across all three screenshot runs; reduced-
+      motion run confirmed no animation attached.
+- [x] Fresh-eyes check on both desktop and mobile viewport widths. — Both
+      screenshot-verified; layout holds at 390px width.
