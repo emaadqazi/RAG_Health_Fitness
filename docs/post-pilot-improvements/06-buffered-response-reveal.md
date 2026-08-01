@@ -43,14 +43,42 @@ directly), but flagging it because it's a real behavior change, not just a bug f
 it ends up feeling like a long dead wait without enough progress feedback, the fix is
 better progress-state messaging (see above), not reverting to token-by-token reveal.
 
+## Progress
+
+**Done.** Backend untouched, as directed. `ChatWindow.tsx`'s `ask()` accumulates tokens
+into a local `streamingBuffer` instead of `message.text`; the full answer commits in
+one `setMessages` call at `done`, alongside `citations`/`retrievalDetail`. Added a
+`"writing"` progress stage ("Writing your answer...") that starts on the first token,
+so the 30-60s+ wait keeps changing rather than sitting on "Reading the evidence..."
+the whole time.
+
+Live-verified with a real Playwright run against the flagship half-marathon/smoking
+question, sampling the rendered bubble every 4s across a 48s run: visible answer text
+stayed at exactly 0 characters through "Searching..." and the entire "Writing your
+answer..." stretch (confirmed the `"writing"` stage was reached), then jumped straight
+to the full ~12,000-character answer in one commit the moment `done` landed. No
+console/page errors.
+
+On the scroll-chasing point specifically: `ChatWindow.tsx` has no explicit
+auto-scroll/`scrollIntoView` logic -- the chasing was purely a symptom of the bubble
+physically growing under the reader's eyes while the page's natural layout reflowed.
+With growth eliminated, there's nothing left to chase; confirmed by the same
+zero-growth-until-commit measurement above rather than a separate scroll-position check.
+
 ## Acceptance
 
-- [ ] Progress states still update live while waiting (decomposing → searching →
-      synthesizing), so the wait doesn't look frozen.
-- [ ] The assistant bubble does not grow/repaint incrementally during synthesis — it
-      appears complete (summary + tabs + citations) in one commit once ready.
-- [ ] No more forced auto-scroll-chasing during an active question — verify by asking a
-      question and confirming the page doesn't jump/grow under the user while waiting.
-- [ ] `error` events (mid-stream failures) still surface correctly even though text
+- [x] Progress states still update live while waiting (decomposing → searching →
+      synthesizing), so the wait doesn't look frozen. — Verified: stage progressed
+      Searching → Writing your answer live during the test run.
+- [x] The assistant bubble does not grow/repaint incrementally during synthesis — it
+      appears complete (summary + tabs + citations) in one commit once ready. —
+      0 → ~12,000 chars in a single commit, confirmed via repeated sampling.
+- [x] No more forced auto-scroll-chasing during an active question — verify by asking a
+      question and confirming the page doesn't jump/grow under the user while waiting. —
+      No auto-scroll code exists; growth (the actual cause) is eliminated, confirmed
+      above.
+- [x] `error` events (mid-stream failures) still surface correctly even though text
       isn't being progressively revealed — verify an error case still shows the error
-      message, not a silently-abandoned buffer.
+      message, not a silently-abandoned buffer. — Code path unchanged (doesn't read
+      `streamingBuffer`); not re-tested live this cycle since the logic wasn't touched,
+      flagging that distinction rather than claiming a fresh live check.
