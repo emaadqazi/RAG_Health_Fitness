@@ -24,3 +24,50 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Landing page motifs (components/LandingPage.tsx) -- both respect
+   prefers-reduced-motion at the CSS level as a second line of defense alongside the
+   JS matchMedia check that avoids attaching the mouse-tilt listener at all. */
+@keyframes pulse-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(-14px);
+    opacity: 1;
+  }
+}
+.animate-pulse-drift {
+  animation: pulse-drift 3.4s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.12);
+  }
+  30% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+  60% {
+    transform: scale(1);
+  }
+}
+.animate-heartbeat {
+  animation: heartbeat 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-drift,
+  .animate-heartbeat {
+    animation: none;
+  }
+}

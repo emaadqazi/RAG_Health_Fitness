@@ -1,11 +1,5 @@
-import { ChatWindow } from "@/components/ChatWindow";
-import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { AppShell } from "@/components/AppShell";
 
 export default function Home() {
-  return (
-    <div className="flex flex-1 flex-col">
-      <DisclaimerBanner />
-      <ChatWindow />
-    </div>
-  );
+  return <AppShell />;
 }
