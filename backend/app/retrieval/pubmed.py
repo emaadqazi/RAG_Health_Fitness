@@ -16,6 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from app.config import get_settings
 from app.retrieval.models import Paper
+from app.retrieval.text_utils import clean_title
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ def _parse_pubmed_article(article_elem: ElementTree.Element) -> Paper | None:
     if article is None:
         return None
 
-    title = _text(article.find("ArticleTitle"))
+    title = clean_title(_text(article.find("ArticleTitle")))
 
     abstract_parts = []
     abstract_elem = article.find("Abstract")

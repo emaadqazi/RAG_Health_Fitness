@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
@@ -33,6 +34,29 @@ logger = logging.getLogger(__name__)
 class PipelineEvent:
     type: str  # decomposition | sources | token | done | error
     data: dict[str, Any] = field(default_factory=dict)
+
+
+_CITATION_KEY_RE = re.compile(r"\[(\d+)\]")
+
+
+def _split_into_subtopic_sections(full_answer: str) -> list[str]:
+    """Mirror of the frontend's section splitting (MessageBubble.tsx's
+    splitIntoSections) -- split the answer on every "## " header boundary and drop
+    the Summary section, returning each remaining section's body text in order.
+    Used to determine which citation keys were actually used *within a given
+    sub-topic's specific section* of the answer, not just anywhere in the whole text.
+    """
+    chunks = re.split(r"\n(?=##\s+)", full_answer.strip())
+    sections = []
+    for chunk in chunks:
+        match = re.match(r"^##\s+(.+?)\s*\n([\s\S]*)$", chunk.strip())
+        if not match:
+            continue
+        heading, body = match.group(1).strip(), match.group(2).strip()
+        if heading.lower() == "summary" or not body:
+            continue
+        sections.append(body)
+    return sections
 
 
 async def _search_all_sources(client: httpx.AsyncClient, query: str) -> tuple[list[Paper], dict[str, int]]:
@@ -135,15 +159,46 @@ async def run_pipeline(llm: LLMProvider, question: str) -> AsyncIterator[Pipelin
 
     user_content, citations = assemble_context(question, subtopic_results, all_papers)
 
+    full_answer_parts: list[str] = []
     async for token in stream_synthesis(llm, user_content, settings.max_synthesis_output_tokens):
+        full_answer_parts.append(token)
         yield PipelineEvent("token", {"text": token})
+    full_answer = "".join(full_answer_parts)
 
     # "cited" here answers the source-transparency question of *why* one paper was
-    # surfaced over another for a sub-topic: it's whichever chunks were closest in
-    # embedding space (lowest `distance`) and therefore made it into the top-k fed to
-    # the synthesis LLM, cross-referenced against which of those papers the LLM actually
-    # cited in its answer.
-    cited_canonical_ids = {c.paper.canonical_id for c in citations}
+    # surfaced over another for a *given sub-topic*. A naive check -- "is this paper's
+    # canonical_id anywhere in the citations list" -- is over-inclusive: assemble_context
+    # bundles every chunk of a paper across *all* sub-topics under one shared citation
+    # key, so a paper cited via sub-topic A's chunk would also show cited under sub-topic
+    # B's unrelated chunk (confirmed live: nearly every entry showed as cited). Checking
+    # chunk-text membership in that shared key's excerpts doesn't fix it either -- every
+    # candidate chunk shown in a sub-topic's results was, by construction, also fed into
+    # that paper's shared excerpts list, so the check reduces back to the same
+    # over-inclusive paper-level result (confirmed live: identical output before/after).
+    #
+    # The only real signal for "did this sub-topic's section of the answer actually use
+    # this citation" is the rendered answer text itself: split it into per-sub-topic
+    # sections the same way the frontend does (doc 07), and check which citation keys
+    # literally appear as "[n]" within *that specific section*, not the whole answer.
+    key_by_paper = {c.paper.canonical_id: c.key for c in citations}
+    answer_sections = _split_into_subtopic_sections(full_answer)
+    section_cited_keys: list[set[int]]
+    if len(answer_sections) == len(subtopic_task_results):
+        section_cited_keys = [{int(k) for k in _CITATION_KEY_RE.findall(body)} for body in answer_sections]
+    else:
+        # The model didn't produce exactly one "## " section per sub-topic (e.g. it
+        # merged two sub-topics into one section) -- pairing sections to sub-topics
+        # positionally would risk mismatching them, so fall back to "cited anywhere in
+        # the answer" for all sub-topics rather than attributing a citation to the
+        # wrong one.
+        logger.warning(
+            "Answer section count (%d) != sub-topic count (%d); falling back to whole-answer cited check",
+            len(answer_sections),
+            len(subtopic_task_results),
+        )
+        all_keys_used = {int(k) for k in _CITATION_KEY_RE.findall(full_answer)}
+        section_cited_keys = [all_keys_used] * len(subtopic_task_results)
+
     retrieval_detail = [
         {
             "label": sr.subtopic.label,
@@ -155,13 +210,13 @@ async def run_pipeline(llm: LLMProvider, question: str) -> AsyncIterator[Pipelin
                     "link": all_papers[r.paper_canonical_id].link,
                     "distance": r.distance,
                     "section": r.section,
-                    "cited": r.paper_canonical_id in cited_canonical_ids,
+                    "cited": key_by_paper.get(r.paper_canonical_id) in section_cited_keys[i],
                 }
                 for r in sorted(sr.results, key=lambda r: r.distance)
                 if r.paper_canonical_id in all_papers
             ],
         }
-        for sr in subtopic_task_results
+        for i, sr in enumerate(subtopic_task_results)
     ]
 
     yield PipelineEvent(

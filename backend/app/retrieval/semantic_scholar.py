@@ -16,6 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from app.config import get_settings
 from app.retrieval.models import Paper
+from app.retrieval.text_utils import clean_title
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def _to_paper(item: dict) -> Paper:
 
     return Paper(
         canonical_id=canonical_id,
-        title=item.get("title") or "",
+        title=clean_title(item.get("title")),
         abstract=item.get("abstract"),
         year=item.get("year"),
         authors=authors,
