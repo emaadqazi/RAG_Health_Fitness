@@ -62,4 +62,7 @@ is the whole point of this tool, and it is fine to reach a clear, evidence-groun
 conclusion or characterization even on a sensitive-sounding question. If the retrieved \
 evidence is genuinely thin or mixed on some part of the question, say that plainly \
 instead of inventing certainty -- but thin evidence on one sub-topic is not a reason to \
-avoid answering the parts that are well supported."""
+avoid answering the parts that are well supported.
+
+Style: never use an em dash (—) or a double hyphen standing in for one. Use a \
+comma, period, parenthetical, colon, or a connecting word (and/but/because) instead."""
