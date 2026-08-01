@@ -39,9 +39,10 @@ Build phases:
 - [x] Phase 4 — Backend API (SSE streaming) — live-tested: `curl -N` against a locally
       running server showed `decomposition` → `sources` → individually-arriving `token`
       events over several seconds, not one buffered response
-- [ ] Phase 5 — Frontend chat UI — components built and wired into `page.tsx`,
-      TypeScript compiles clean, but no live browser round-trip has been done yet
-      (progress states, citation rendering, mobile viewport)
+- [x] Phase 5 — Frontend chat UI — live browser round-trip verified via Playwright
+      (installed locally for this) across many real Claude Haiku 4.5 runs: progress
+      states, citation rendering, and mobile viewport all confirmed working (see
+      Phase 10 below for the fuller UI build-out since this was first checked)
 - [x] Phase 6 — Rate limiting — live-tested against local Redis: requests 1–3 allowed,
       4th+ blocked with `RateLimitExceeded`, under a temporarily-lowered limit per the
       plan's own verify method
@@ -51,6 +52,13 @@ Build phases:
 - [ ] Phase 8 — Deploy (Vercel + Render + Supabase + Upstash) — blocked on accounts only
       you can create, see below
 - [ ] Phase 9 — Polish / portfolio-readiness
+- [x] Phase 10 — Post-pilot improvements (see
+      [docs/post-pilot-improvements/](docs/post-pilot-improvements/)) — all 9 items
+      implemented and live-verified: markdown rendering, structured summary + clickable
+      citation excerpts, source-transparency tab, healthcare-friendly redesign, a
+      "Let's begin" landing page, buffered (non-growing) answer reveal, per-sub-topic
+      answer tabs, two real bugs found and fixed (escaped HTML in titles, an
+      over-inclusive "cited" flag), and citation-click-to-highlighted-source linking
 
 ## What's needed to deploy
 

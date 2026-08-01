@@ -1,5 +1,9 @@
 # Post-pilot improvements
 
+**Status: all 9 items below are implemented and live-verified** (Playwright,
+real Claude Haiku 4.5 pipeline runs, both normal and reduced-motion where relevant).
+See each doc's own Progress/Acceptance sections for the specifics and evidence.
+
 This folder is **Phase 10** — work identified from actually using the app after the
 Phase 0–9 pilot build (see [../ARCHITECTURE.md](../ARCHITECTURE.md) for the original
 plan), not part of the original scope. Each file below is one issue, written against
