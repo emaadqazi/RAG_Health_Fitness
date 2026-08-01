@@ -31,6 +31,13 @@ export function ChatWindow() {
       setMessages((prev) => updateLastAssistant(prev, (m) => ({ ...m, progressStage: "cold_start" })));
     }, COLD_START_HINT_DELAY_MS);
 
+    // Tokens accumulate here silently rather than being written into message.text as
+    // they arrive -- the whole answer (Summary callout, tabs, citation chips) commits
+    // in one render once `done` lands, instead of the bubble growing/repainting and
+    // forcing a scroll-chase the whole time synthesis is running.
+    let streamingBuffer = "";
+    let hasStartedWriting = false;
+
     try {
       for await (const event of streamChat(question, controller.signal)) {
         clearTimeout(coldStartTimer);
@@ -39,14 +46,17 @@ export function ChatWindow() {
         } else if (event.type === "sources") {
           setMessages((prev) => updateLastAssistant(prev, (m) => ({ ...m, progressStage: "synthesizing" })));
         } else if (event.type === "token") {
-          setMessages((prev) =>
-            updateLastAssistant(prev, (m) => ({ ...m, progressStage: undefined, text: m.text + event.data.text }))
-          );
+          streamingBuffer += event.data.text;
+          if (!hasStartedWriting) {
+            hasStartedWriting = true;
+            setMessages((prev) => updateLastAssistant(prev, (m) => ({ ...m, progressStage: "writing" })));
+          }
         } else if (event.type === "done") {
           setMessages((prev) =>
             updateLastAssistant(prev, (m) => ({
               ...m,
               progressStage: undefined,
+              text: streamingBuffer,
               citations: event.data.citations,
               retrievalDetail: event.data.retrieval_detail,
             }))
