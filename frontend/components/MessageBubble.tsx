@@ -69,18 +69,51 @@ function splitSummarySection(text: string): { summary: string | null; rest: stri
   return { summary: summary || null, rest };
 }
 
-const TAB_BUTTON_BASE = "-mb-px border-b-2 px-2 pb-1.5 text-xs font-medium";
+type ContentTab = { key: string; label: string; body: string };
+
+// The synthesis prompt already emits one "## <sub-topic label>" header per sub-topic
+// (matching the decomposition event's labels) after the Summary block -- split on
+// every such boundary so each becomes its own tab instead of one long scroll. Only
+// runs once on the complete text (see doc 06: buffering the full answer until `done`
+// means there's no partially-streamed final section to worry about splitting).
+function splitIntoSections(rest: string): ContentTab[] {
+  if (!rest) return [];
+  const chunks = rest.split(/\n(?=##\s+)/);
+  const sections: ContentTab[] = [];
+  chunks.forEach((chunk, i) => {
+    const match = chunk.match(/^##\s+(.+?)\s*\n([\s\S]*)$/);
+    if (match) {
+      const body = match[2].trim();
+      if (body) sections.push({ key: `section-${i}`, label: match[1].trim(), body });
+    } else if (chunk.trim()) {
+      // Text before any "## " header (or the model didn't follow the header
+      // structure) -- keep it as an unlabeled leading tab rather than dropping it.
+      sections.push({ key: `section-${i}`, label: "Answer", body: chunk.trim() });
+    }
+  });
+  return sections;
+}
+
+const TAB_BUTTON_BASE = "-mb-px shrink-0 max-w-[10rem] truncate border-b-2 px-2 pb-1.5 text-xs font-medium";
 const TAB_BUTTON_ACTIVE = "border-teal-600 text-teal-700 dark:border-teal-400 dark:text-teal-300";
 const TAB_BUTTON_INACTIVE = "border-transparent text-stone-400 hover:text-stone-600 dark:hover:text-stone-300";
+const SOURCES_TAB_KEY = "__sources__";
 
 export function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
-  const [activeTab, setActiveTab] = useState<"answer" | "sources">("answer");
+  // null until the user explicitly picks a tab -- lets the default (first sub-topic)
+  // be computed fresh each render instead of getting locked in before content arrives.
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const citationsByKey = useMemo(() => new Map((message.citations ?? []).map((c) => [c.key, c])), [message.citations]);
   const { summary, rest } = message.role === "assistant" ? splitSummarySection(message.text) : { summary: null, rest: message.text };
+  const contentTabs = useMemo(() => splitIntoSections(rest), [rest]);
   // Retrieval detail (per-sub-topic candidate breakdown + relevance ranking) only
   // arrives with the `done` event, once synthesis has finished and citations are known.
   const hasSourceDetail = !isUser && (message.retrievalDetail?.length ?? 0) > 0;
+  const tabKeys = [...contentTabs.map((t) => t.key), ...(hasSourceDetail ? [SOURCES_TAB_KEY] : [])];
+  const showTabs = tabKeys.length > 1;
+  const defaultTab = contentTabs[0]?.key ?? (hasSourceDetail ? SOURCES_TAB_KEY : null);
+  const effectiveTab = activeTab && tabKeys.includes(activeTab) ? activeTab : defaultTab;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -93,47 +126,52 @@ export function MessageBubble({ message }: { message: Message }) {
       >
         {message.progressStage && <ProgressStatus stage={message.progressStage} />}
         {message.error && <p className="text-sm text-red-600 dark:text-red-400">{message.error}</p>}
-        {hasSourceDetail && (
-          <div className="mb-2 flex gap-3 border-b border-stone-200 dark:border-stone-700">
-            <button
-              type="button"
-              onClick={() => setActiveTab("answer")}
-              className={`${TAB_BUTTON_BASE} ${activeTab === "answer" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
-            >
-              Answer
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("sources")}
-              className={`${TAB_BUTTON_BASE} ${activeTab === "sources" ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
-            >
-              Sources
-            </button>
-          </div>
-        )}
-        {(!hasSourceDetail || activeTab === "answer") && (
-          <>
-            <CitationsContext.Provider value={citationsByKey}>
-              {summary && (
-                <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 dark:border-teal-900/40 dark:bg-teal-950/30">
-                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-400">Summary</p>
-                  {/* react-markdown re-parses on every render, which is fine at chat-turn
-                      scale (one message, a few KB). */}
-                  <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
-                    {summary}
-                  </ReactMarkdown>
-                </div>
+        <CitationsContext.Provider value={citationsByKey}>
+          {summary && (
+            <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 dark:border-teal-900/40 dark:bg-teal-950/30">
+              <p className="mb-1 text-[11px] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-400">Summary</p>
+              {/* react-markdown re-parses on every render, which is fine at chat-turn
+                  scale (one message, a few KB). */}
+              <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+                {summary}
+              </ReactMarkdown>
+            </div>
+          )}
+          {showTabs && (
+            <div className="mb-2 flex gap-3 overflow-x-auto border-b border-stone-200 dark:border-stone-700">
+              {contentTabs.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  title={t.label}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`${TAB_BUTTON_BASE} ${effectiveTab === t.key ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+              {hasSourceDetail && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(SOURCES_TAB_KEY)}
+                  className={`${TAB_BUTTON_BASE} ${effectiveTab === SOURCES_TAB_KEY ? TAB_BUTTON_ACTIVE : TAB_BUTTON_INACTIVE}`}
+                >
+                  Sources
+                </button>
               )}
-              {rest && (
-                <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
-                  {rest}
+            </div>
+          )}
+          {contentTabs.map(
+            (t) =>
+              (!showTabs || effectiveTab === t.key) && (
+                <ReactMarkdown key={t.key} remarkPlugins={remarkPlugins} components={markdownComponents}>
+                  {t.body}
                 </ReactMarkdown>
-              )}
-            </CitationsContext.Provider>
-            {message.citations && <CitationList citations={message.citations} />}
-          </>
-        )}
-        {hasSourceDetail && activeTab === "sources" && <SourceTransparencyPanel detail={message.retrievalDetail!} />}
+              )
+          )}
+        </CitationsContext.Provider>
+        {message.citations && effectiveTab !== SOURCES_TAB_KEY && <CitationList citations={message.citations} />}
+        {hasSourceDetail && effectiveTab === SOURCES_TAB_KEY && <SourceTransparencyPanel detail={message.retrievalDetail!} />}
       </div>
     </div>
   );
