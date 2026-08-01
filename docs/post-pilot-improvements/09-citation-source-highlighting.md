@@ -47,13 +47,51 @@ achievable) — the excerpt text shown *is* the actual passage that informed the
 which satisfies the "backtrack the exact information" goal without depending on
 external sites cooperating.
 
+## Progress
+
+**Done.** Backend now sends a `citation_key` per selected chunk, set only on the
+chunk(s) that actually earned a citation (per doc 08's chunk-level, section-scoped
+fix) -- not just "this paper has a key somewhere." Frontend: `CitationChip`'s popover
+gained a "Show in Sources" button; clicking it switches to the Sources tab and passes
+a `{key, nonce}` request to `SourceTransparencyPanel`, which finds every entry sharing
+that key via a `data-citation-key` attribute, scrolls the first into view, and applies
+a highlight class (removed-and-re-added to force the animation to restart even on
+repeat clicks of the same chip).
+
+One architectural note on the fourth acceptance item below: sub-topic tabs (07) only
+ever split the *answer* content, not Sources -- `SourceTransparencyPanel` still renders
+every sub-topic's entries in one scrollable panel (that was always the design, see
+03/07's own progress notes). So there's no "per-sub-topic Sources tab" to target; the
+implementation switches to the one Sources tab and finds the entry within it regardless
+of which sub-topic section it's under, which fully satisfies the underlying goal
+("backtrack to where this sits among the retrieved sources") without needing tab-of-
+tabs logic doc 09 speculated might be necessary.
+
+Live-verified (normal + emulated `prefers-reduced-motion`): clicking a chip's "Show in
+Sources" correctly switches tabs and highlights all matching entries with a
+screenshot-confirmed teal ring, distinct from the existing cited (green)/uncited
+(dimmed) styling. Reduced-motion pass confirmed no animation, same static tint applied
+instantly. No console/page errors either run.
+
 ## Acceptance
 
-- [ ] Clicking a citation chip (or an action within its popover) switches to the Sources
-      tab and visually highlights the specific matching entry.
-- [ ] The highlighted entry is unambiguous — same excerpt text as the popover, not just
-      "some entry from the right paper."
-- [ ] Highlight behavior respects `prefers-reduced-motion` (static emphasis instead of
-      an animated pulse/flash for users who've asked for less motion).
-- [ ] Works correctly once sub-topic tabs ([07](07-tabbed-answer-sections.md)) exist —
-      verify the right sub-topic tab activates, not just the Sources tab in general.
+- [x] Clicking a citation chip (or an action within its popover) switches to the Sources
+      tab and visually highlights the specific matching entry. — Screenshot-verified
+      both motion modes.
+- [x] The highlighted entry is unambiguous — same excerpt text as the popover, not just
+      "some entry from the right paper." — `citation_key` is only set on the chunk(s)
+      whose exact text is part of that citation (chunk-level, per doc 08), so every
+      highlighted entry is a genuine match, not just paper-level proximity. One honest
+      caveat: the popover itself still previews only the first excerpt (a doc-02
+      design choice, unchanged here) even when a citation was earned via multiple
+      distinct chunks, all of which get highlighted -- not a mismatch, just worth
+      naming.
+- [x] Highlight behavior respects `prefers-reduced-motion` (static emphasis instead of
+      an animated pulse/flash for users who've asked for less motion). — Verified via
+      Playwright's emulated reduced-motion mode: no `.citation-highlight` animation,
+      same tint applied instantly, `scrollIntoView` uses `"auto"` not `"smooth"`.
+- [x] Works correctly once sub-topic tabs ([07](07-tabbed-answer-sections.md)) exist —
+      verify the right sub-topic tab activates, not just the Sources tab in general. —
+      See the architectural note above: Sources was never split per-sub-topic, so this
+      resolves to "switches to the Sources tab and finds the entry regardless of which
+      sub-topic section it's under," which is the actual goal and is verified working.
