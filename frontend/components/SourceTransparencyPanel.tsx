@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import type { RetrievalDetail } from "@/lib/api";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const SOURCE_LABELS: Record<string, string> = {
   pubmed: "PubMed",
@@ -6,13 +10,38 @@ const SOURCE_LABELS: Record<string, string> = {
   europepmc: "Europe PMC",
 };
 
-export function SourceTransparencyPanel({ detail }: { detail: RetrievalDetail[] }) {
+// A nonce alongside the key so clicking the same citation chip twice in a row
+// re-triggers the highlight (React state alone wouldn't detect "the same value
+// again" as a change).
+export type HighlightRequest = { key: number; nonce: number };
+
+export function SourceTransparencyPanel({ detail, highlight }: { detail: RetrievalDetail[]; highlight: HighlightRequest | null }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (!highlight || !containerRef.current) return;
+    const matches = containerRef.current.querySelectorAll<HTMLElement>(`[data-citation-key="${highlight.key}"]`);
+    if (matches.length === 0) return;
+
+    matches[0].scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+
+    matches.forEach((el) => {
+      // Force the CSS animation to restart even if this exact key was already
+      // highlighted (e.g. the user clicked the same chip twice): remove the class,
+      // trigger a reflow, then re-add it.
+      el.classList.remove("citation-highlight");
+      void el.offsetWidth;
+      el.classList.add("citation-highlight");
+    });
+  }, [highlight, reducedMotion]);
+
   if (detail.length === 0) {
     return <p className="py-2 text-sm text-stone-500 dark:text-stone-400">No retrieval detail available for this answer.</p>;
   }
 
   return (
-    <div className="space-y-4 py-1">
+    <div ref={containerRef} className="space-y-4 py-1">
       {detail.map((subtopic) => (
         <div key={subtopic.label}>
           <p className="text-sm font-semibold text-stone-800 dark:text-stone-200">{subtopic.label}</p>
@@ -33,6 +62,7 @@ export function SourceTransparencyPanel({ detail }: { detail: RetrievalDetail[] 
               {subtopic.selected.map((chunk, i) => (
                 <li
                   key={i}
+                  data-citation-key={chunk.citation_key ?? undefined}
                   className={`flex items-start gap-2 rounded-md px-2 py-1 text-xs ${
                     chunk.cited
                       ? "bg-emerald-50 dark:bg-emerald-950/30"

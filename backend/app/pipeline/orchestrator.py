@@ -199,25 +199,36 @@ async def run_pipeline(llm: LLMProvider, question: str) -> AsyncIterator[Pipelin
         all_keys_used = {int(k) for k in _CITATION_KEY_RE.findall(full_answer)}
         section_cited_keys = [all_keys_used] * len(subtopic_task_results)
 
-    retrieval_detail = [
-        {
-            "label": sr.subtopic.label,
-            "search_query": sr.subtopic.search_query,
-            "candidates_by_source": sr.candidates_by_source,
-            "selected": [
+    retrieval_detail = []
+    for i, sr in enumerate(subtopic_task_results):
+        selected = []
+        for r in sorted(sr.results, key=lambda r: r.distance):
+            if r.paper_canonical_id not in all_papers:
+                continue
+            paper_key = key_by_paper.get(r.paper_canonical_id)
+            cited = paper_key is not None and paper_key in section_cited_keys[i]
+            selected.append(
                 {
                     "title": all_papers[r.paper_canonical_id].title,
                     "link": all_papers[r.paper_canonical_id].link,
                     "distance": r.distance,
                     "section": r.section,
-                    "cited": key_by_paper.get(r.paper_canonical_id) in section_cited_keys[i],
+                    "cited": cited,
+                    # Lets the frontend link a clicked CitationChip (identified by its
+                    # citation key) back to this specific entry in the Sources tab
+                    # (doc 09) -- only set when this chunk is the one that earned the
+                    # citation, not just "this paper has a key somewhere."
+                    "citation_key": paper_key if cited else None,
                 }
-                for r in sorted(sr.results, key=lambda r: r.distance)
-                if r.paper_canonical_id in all_papers
-            ],
-        }
-        for i, sr in enumerate(subtopic_task_results)
-    ]
+            )
+        retrieval_detail.append(
+            {
+                "label": sr.subtopic.label,
+                "search_query": sr.subtopic.search_query,
+                "candidates_by_source": sr.candidates_by_source,
+                "selected": selected,
+            }
+        )
 
     yield PipelineEvent(
         "done",

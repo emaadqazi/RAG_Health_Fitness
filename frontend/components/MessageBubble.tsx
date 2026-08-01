@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Citation, RetrievalDetail } from "@/lib/api";
 import { CitationChipRenderer, CitationsContext } from "./CitationChip";
 import { CitationList } from "./CitationList";
 import { ProgressStatus, type ProgressStage } from "./ProgressStatus";
-import { SourceTransparencyPanel } from "./SourceTransparencyPanel";
+import { SourceTransparencyPanel, type HighlightRequest } from "./SourceTransparencyPanel";
 import { remarkCitations } from "@/lib/remarkCitations";
 
 export type Message = {
@@ -104,7 +104,15 @@ export function MessageBubble({ message }: { message: Message }) {
   // null until the user explicitly picks a tab -- lets the default (first sub-topic)
   // be computed fresh each render instead of getting locked in before content arrives.
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [highlight, setHighlight] = useState<HighlightRequest | null>(null);
   const citationsByKey = useMemo(() => new Map((message.citations ?? []).map((c) => [c.key, c])), [message.citations]);
+  // Clicking a citation chip's "Show in Sources" backtracks to the matching entry:
+  // switch to the Sources tab and trigger its scroll-into-view + highlight (doc 09).
+  const onShowInSources = useCallback((key: number) => {
+    setActiveTab(SOURCES_TAB_KEY);
+    setHighlight({ key, nonce: Date.now() });
+  }, []);
+  const citationsContextValue = useMemo(() => ({ citationsByKey, onShowInSources }), [citationsByKey, onShowInSources]);
   const { summary, rest } = message.role === "assistant" ? splitSummarySection(message.text) : { summary: null, rest: message.text };
   const contentTabs = useMemo(() => splitIntoSections(rest), [rest]);
   // Retrieval detail (per-sub-topic candidate breakdown + relevance ranking) only
@@ -126,7 +134,7 @@ export function MessageBubble({ message }: { message: Message }) {
       >
         {message.progressStage && <ProgressStatus stage={message.progressStage} />}
         {message.error && <p className="text-sm text-red-600 dark:text-red-400">{message.error}</p>}
-        <CitationsContext.Provider value={citationsByKey}>
+        <CitationsContext.Provider value={citationsContextValue}>
           {summary && (
             <div className="mb-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 dark:border-teal-900/40 dark:bg-teal-950/30">
               <p className="mb-1 text-[11px] font-semibold tracking-wide text-teal-700 uppercase dark:text-teal-400">Summary</p>
@@ -171,7 +179,9 @@ export function MessageBubble({ message }: { message: Message }) {
           )}
         </CitationsContext.Provider>
         {message.citations && effectiveTab !== SOURCES_TAB_KEY && <CitationList citations={message.citations} />}
-        {hasSourceDetail && effectiveTab === SOURCES_TAB_KEY && <SourceTransparencyPanel detail={message.retrievalDetail!} />}
+        {hasSourceDetail && effectiveTab === SOURCES_TAB_KEY && (
+          <SourceTransparencyPanel detail={message.retrievalDetail!} highlight={highlight} />
+        )}
       </div>
     </div>
   );

@@ -30,6 +30,7 @@ export type SelectedChunk = {
   distance: number;
   section: string;
   cited: boolean;
+  citation_key: number | null;
 };
 
 export type RetrievalDetail = {

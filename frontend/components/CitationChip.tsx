@@ -5,10 +5,27 @@ import type { Citation } from "@/lib/api";
 
 // Populated by MessageBubble per-message so the stable `citation-chip` renderer
 // (registered once in react-markdown's components map) can look up excerpt data
-// without react-markdown re-creating component instances on every token.
-export const CitationsContext = createContext<Map<number, Citation>>(new Map());
+// and trigger a "show in Sources" backtrack without react-markdown re-creating
+// component instances on every token.
+export type CitationsContextValue = {
+  citationsByKey: Map<number, Citation>;
+  onShowInSources: (key: number) => void;
+};
 
-function CitationPopover({ citation, onClose }: { citation: Citation; onClose: () => void }) {
+export const CitationsContext = createContext<CitationsContextValue>({
+  citationsByKey: new Map(),
+  onShowInSources: () => {},
+});
+
+function CitationPopover({
+  citation,
+  onClose,
+  onShowInSources,
+}: {
+  citation: Citation;
+  onClose: () => void;
+  onShowInSources: () => void;
+}) {
   const excerpt = citation.excerpts[0];
   return (
     <span
@@ -21,7 +38,7 @@ function CitationPopover({ citation, onClose }: { citation: Citation; onClose: (
           &ldquo;{excerpt.text.length > 240 ? `${excerpt.text.slice(0, 240)}...` : excerpt.text}&rdquo;
         </span>
       )}
-      <span className="flex items-center justify-between">
+      <span className="mb-1.5 flex items-center justify-between">
         {citation.link ? (
           <a href={citation.link} target="_blank" rel="noopener noreferrer" className="text-teal-700 underline dark:text-teal-400">
             View source
@@ -33,11 +50,18 @@ function CitationPopover({ citation, onClose }: { citation: Citation; onClose: (
           Close
         </button>
       </span>
+      <button
+        type="button"
+        onClick={onShowInSources}
+        className="w-full rounded-md border border-teal-200 py-1 text-center font-medium text-teal-700 hover:bg-teal-50 dark:border-teal-800 dark:text-teal-400 dark:hover:bg-teal-950/40"
+      >
+        Show in Sources
+      </button>
     </span>
   );
 }
 
-export function CitationChip({ n, citation }: { n: number; citation?: Citation }) {
+export function CitationChip({ n, citation, onShowInSources }: { n: number; citation?: Citation; onShowInSources: (key: number) => void }) {
   const [open, setOpen] = useState(false);
 
   if (!citation) {
@@ -57,13 +81,22 @@ export function CitationChip({ n, citation }: { n: number; citation?: Citation }
       >
         {n}
       </button>
-      {open && <CitationPopover citation={citation} onClose={() => setOpen(false)} />}
+      {open && (
+        <CitationPopover
+          citation={citation}
+          onClose={() => setOpen(false)}
+          onShowInSources={() => {
+            setOpen(false);
+            onShowInSources(n);
+          }}
+        />
+      )}
     </span>
   );
 }
 
 /** Stable component reference registered in react-markdown's `components` map. */
 export function CitationChipRenderer({ n }: { n: number }) {
-  const citationsByKey = useContext(CitationsContext);
-  return <CitationChip n={n} citation={citationsByKey.get(n)} />;
+  const { citationsByKey, onShowInSources } = useContext(CitationsContext);
+  return <CitationChip n={n} citation={citationsByKey.get(n)} onShowInSources={onShowInSources} />;
 }

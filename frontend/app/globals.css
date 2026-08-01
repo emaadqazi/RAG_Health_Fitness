@@ -71,3 +71,29 @@ body {
     animation: none;
   }
 }
+
+/* Citation -> Sources backtrack highlight (components/SourceTransparencyPanel.tsx,
+   doc 09). Non-reduced-motion: a brief pulse that fades to a static resting tint.
+   Reduced-motion users get the same resting tint applied instantly, no animation --
+   see the media query below, matching the pattern used for the landing page motifs. */
+@keyframes citation-highlight-pulse {
+  0% {
+    background-color: color-mix(in srgb, var(--color-teal-300, #5eead4) 55%, transparent);
+    box-shadow: 0 0 0 2px var(--color-teal-500, #14b8a6);
+  }
+  100% {
+    background-color: color-mix(in srgb, var(--color-teal-300, #5eead4) 18%, transparent);
+    box-shadow: 0 0 0 2px var(--color-teal-500, #14b8a6);
+  }
+}
+.citation-highlight {
+  animation: citation-highlight-pulse 1.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .citation-highlight {
+    animation: none;
+    background-color: color-mix(in srgb, var(--color-teal-300, #5eead4) 18%, transparent);
+    box-shadow: 0 0 0 2px var(--color-teal-500, #14b8a6);
+  }
+}
