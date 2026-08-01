@@ -10,7 +10,7 @@ deprivation blunt the benefits of strength training?" surfaced formatting, struc
 and transparency gaps in how the answer is presented — not pipeline/retrieval bugs
 (those are solid per the live verification in the main README's Status section).
 
-## Issues, roughly in the order they compound on each other
+## Round 1 — issues, roughly in the order they compound on each other
 
 1. [Markdown rendering](01-markdown-rendering.md) — answers are markdown but rendered
    as plain text (visible `##`, `**`). Fix this first; it's a prerequisite for #2 reading
@@ -27,11 +27,33 @@ and transparency gaps in how the answer is presented — not pipeline/retrieval 
    minimalistic, healthcare-friendly look. Sequenced last because #1–#3 change what
    needs to be laid out.
 
+## Round 2 — issues raised after seeing #1–#4 live
+
+Sequencing matters more here than in round 1 — later items depend on earlier ones, noted
+inline.
+
+5. [Landing page](05-landing-page.md) — a "Let's begin" entry screen with a 3D visual
+   treatment, before dropping into the chat. Independent of the rest of this round.
+6. [Buffered response reveal](06-buffered-response-reveal.md) — stop growing the answer
+   bubble token-by-token (forces the user to keep scrolling); reveal the complete answer
+   once ready instead. Do this before #7 — tab-splitting a still-streaming answer adds
+   real complexity that buffering avoids.
+7. [Per-sub-topic tabs](07-tabbed-answer-sections.md) — pull each `## `-headed section
+   of the answer into its own tab instead of one long scroll, alongside the existing
+   Sources tab. Depends on #6.
+8. [Sources tab bugs](08-sources-tab-bugs.md) — two confirmed bugs found while
+   reproducing a user report: raw HTML entities showing in some paper titles, and the
+   "cited in answer" flag being paper-level instead of chunk-level (so it's currently
+   showing almost everything as cited). Independent of #6/#7, but do it before #9.
+9. [Citation → source highlighting](09-citation-source-highlighting.md) — clicking a
+   citation should highlight the matching entry in the Sources tab, not just show a
+   disconnected popover. Depends on #7 (tab targeting) and #8 (accurate `cited` data).
+
 ## Not in scope here
 
 Deploy (Phase 8) and general polish (Phase 9) from the original plan are unaffected by
-this list and can proceed independently — none of these four issues block a pilot
-deploy, they're about response quality/trust once real users are looking at it.
+this list and can proceed independently — none of these issues block a pilot deploy,
+they're about response quality/trust/UX once real users are looking at it.
 
 ## Dev-tooling gotcha (found and fixed during this Phase 10 pass)
 
