@@ -48,14 +48,40 @@ navigable rather than a wall of text.
 - **Default active tab:** first sub-topic, not Sources (Sources should still require an
   explicit click, consistent with current behavior).
 
+## Progress
+
+**Done.** `splitSummarySection()`'s boundary-splitting generalized into
+`splitIntoSections()`, which splits the rest of the answer on every `## ` header into
+one `{key, label, body}` tab. Tab-selection state stays `null` until the user clicks
+one, so the default (first sub-topic) computes fresh from content each render instead
+of locking in before the buffered text (10.6) arrives. Sequenced after 10.6 as
+directed -- only ever splits complete text.
+
+Live-verified with the flagship half-marathon/smoking question on desktop and mobile:
+got 6-7 real tabs from actual sub-topic headers both times (not placeholders, and
+different counts/labels per run since decomposition varies slightly), first tab active
+by default, Summary visibly pinned above the tab bar in every screenshot, Sources tab
+still fully functional alongside the new tabs, long labels truncate with ellipsis (title
+attribute has the full text), and mobile shows ~2 tabs before horizontal scroll kicks in
+-- confirmed usable, not broken. No console/page errors in either run.
+
+Also incidentally reconfirmed doc 08's bug live in the Sources tab screenshot (nearly
+every entry across every sub-topic shows "cited in answer") -- expected, not a
+regression from this change; 08 fixes it.
+
 ## Acceptance
 
-- [ ] A real multi-sub-topic answer shows one tab per sub-topic (matching the actual
-      `## ` headers in the answer), not one long scroll.
-- [ ] Summary callout remains visible/pinned above the tabs regardless of active tab.
-- [ ] Sources tab still works alongside the new sub-topic tabs.
-- [ ] Tab labels stay legible (truncation/ellipsis) even for long sub-topic labels —
-      check against a real long label, not a short placeholder.
-- [ ] Mobile viewport check — a horizontal row of 4–5 tabs needs to not overflow badly
+- [x] A real multi-sub-topic answer shows one tab per sub-topic (matching the actual
+      `## ` headers in the answer), not one long scroll. — Screenshot-verified, 6-7 real
+      tabs from actual headers.
+- [x] Summary callout remains visible/pinned above the tabs regardless of active tab. —
+      Confirmed in every screenshot (default tab, second tab, Sources tab).
+- [x] Sources tab still works alongside the new sub-topic tabs. — Confirmed, full
+      per-sub-topic breakdown still renders correctly.
+- [x] Tab labels stay legible (truncation/ellipsis) even for long sub-topic labels —
+      check against a real long label, not a short placeholder. — Real labels like
+      "Respiratory health trajectory in smokers with aerobic fitness" truncate cleanly.
+- [x] Mobile viewport check — a horizontal row of 4–5 tabs needs to not overflow badly
       on a narrow screen (horizontal scroll on the tab bar itself is an acceptable
-      fallback, just make sure it's usable, not broken).
+      fallback, just make sure it's usable, not broken). — Confirmed at 390px width:
+      ~2 tabs visible, rest reachable via horizontal scroll.
